@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Upload, FileText, CreditCard } from "lucide-react";
@@ -39,9 +38,6 @@ const Index = () => {
                 <Link to="/upload" className="flex items-center gap-2">
                   Get Started <ArrowRight size={16} />
                 </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/dashboard">View Dashboard</Link>
               </Button>
             </div>
           </motion.div>

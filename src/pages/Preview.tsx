@@ -84,7 +84,7 @@ const Preview = () => {
               We couldn't find the document you're looking for.
             </p>
             <Button asChild>
-              <Link to="/dashboard">Return to Dashboard</Link>
+              <Link to="/">Return to Home</Link>
             </Button>
           </div>
         ) : document ? (
