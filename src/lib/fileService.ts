@@ -20,7 +20,7 @@ const mockDocuments: FileDocument[] = [
     fileType: "word",
     size: 1800000,
     uploadDate: new Date(Date.now() - 3600000 * 24).toISOString(),
-    status: "processing",
+    status: "pending",
     thumbnailUrl: "https://placehold.co/600x400/e2e8f0/475569?text=DOCX+Processing",
     isPasswordProtected: true
   }
@@ -46,6 +46,8 @@ export const uploadFile = async (file: File): Promise<FileDocument> => {
   // For now, let's simulate a network request
   return new Promise((resolve) => {
     setTimeout(() => {
+      // Add to our mock documents
+      mockDocuments.push(newDoc);
       resolve(newDoc);
     }, 1500);
   });
@@ -65,6 +67,28 @@ export const getDocument = async (id: string): Promise<FileDocument | null> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(doc || null);
+    }, 500);
+  });
+};
+
+export const updateDocumentStatus = async (id: string, status: FileDocument['status']): Promise<FileDocument | null> => {
+  const docIndex = mockDocuments.findIndex(d => d.id === id);
+  
+  if (docIndex === -1) {
+    return Promise.resolve(null);
+  }
+  
+  // Update the document status
+  mockDocuments[docIndex] = {
+    ...mockDocuments[docIndex],
+    status,
+    // If status is ready, add a download URL
+    ...(status === 'ready' ? { downloadUrl: `/download/${id}` } : {})
+  };
+  
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockDocuments[docIndex]);
     }, 500);
   });
 };
