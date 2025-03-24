@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import Upload from "./pages/Upload";
-import Dashboard from "./pages/Dashboard";
 import Preview from "./pages/Preview";
 import NotFound from "./pages/NotFound";
 
@@ -23,7 +22,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/upload" element={<Upload />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/preview/:id" element={<Preview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
