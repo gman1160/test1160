@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </motion.main>
       <footer className="py-6 px-6 border-t border-border flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
         <div className="mb-4 md:mb-0">
-          © {new Date().getFullYear()} Decrypt Service. All rights reserved.
+          © {new Date().getFullYear()} DocUnlock. All rights reserved.
         </div>
         <div className="flex space-x-6">
           <a href="#" className="hover:text-foreground smooth-transition focus-ring">

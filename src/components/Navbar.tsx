@@ -27,7 +27,7 @@ const Navbar = () => {
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center text-white">
               <LockKeyhole size={18} />
             </div>
-            <span className="font-semibold text-xl hidden sm:inline-block">DecryptService</span>
+            <span className="font-semibold text-xl hidden sm:inline-block">DocUnlock</span>
           </Link>
         </div>
 
