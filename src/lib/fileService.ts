@@ -1,20 +1,7 @@
-
 import { FileDocument } from "@/types";
 
 // Storage for documents (simulating a database)
-let mockDocuments: FileDocument[] = [
-  {
-    id: "doc-1",
-    fileName: "Financial_Report_2023.pdf",
-    fileType: "pdf",
-    size: 2500000,
-    uploadDate: new Date(Date.now() - 3600000 * 48).toISOString(),
-    status: "ready",
-    previewUrl: "/preview/doc-1",
-    thumbnailUrl: "https://placehold.co/600x400/e2e8f0/475569?text=PDF+Preview",
-    isPasswordProtected: true
-  }
-];
+let mockDocuments: FileDocument[] = [];
 
 export const uploadFile = async (file: File): Promise<FileDocument> => {
   // In a real app, this would upload to a server

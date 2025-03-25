@@ -11,10 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getUserDocuments, updateDocumentStatus } from "@/lib/fileService";
+import { getUserDocuments, updateDocumentStatus, removeDocument } from "@/lib/fileService";
 import { FileDocument } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { Shield, Upload, FileUp, Loader2, RefreshCw } from "lucide-react";
+import { Shield, Upload, FileUp, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const Admin = () => {
@@ -24,6 +24,7 @@ const Admin = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +33,7 @@ const Admin = () => {
     // Set up an interval to check for new documents every 30 seconds
     const intervalId = setInterval(() => {
       fetchDocuments(true);
-    }, 30000);
+    }, 10000); // Reduced to 10 seconds for faster updates
     
     return () => clearInterval(intervalId);
   }, []);
@@ -100,6 +101,25 @@ const Admin = () => {
     } finally {
       setIsUploading(false);
       setProcessingId(null);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    try {
+      setIsDeleting(docId);
+      const success = await removeDocument(docId);
+      
+      if (success) {
+        await fetchDocuments();
+        toast.success("Document removed successfully");
+      } else {
+        toast.error("Failed to remove document");
+      }
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+      toast.error("Failed to delete document");
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -226,6 +246,19 @@ const Admin = () => {
                             )}
                           </Button>
                         )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteDocument(doc.id)}
+                          disabled={isDeleting === doc.id}
+                          className="flex items-center gap-1"
+                        >
+                          {isDeleting === doc.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
