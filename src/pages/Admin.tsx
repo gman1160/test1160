@@ -82,20 +82,20 @@ const Admin = () => {
       setIsUploading(true);
       
       // First, upload the decrypted file to Supabase Storage
-      const { data: document } = await supabase
+      const { data: docData } = await supabase
         .from('documents')
         .select('storage_path')
         .eq('id', docId)
         .single();
       
-      if (!document) {
+      if (!docData) {
         throw new Error("Document not found");
       }
       
       // Upload the new file, replacing the old one
       const { error: uploadError } = await supabase.storage
         .from('documents')
-        .update(document.storage_path, selectedFile);
+        .update(docData.storage_path, selectedFile);
       
       if (uploadError) {
         throw new Error(`Failed to upload decrypted file: ${uploadError.message}`);
@@ -110,8 +110,8 @@ const Admin = () => {
       toast.success("Decrypted document uploaded successfully");
       setSelectedFile(null);
       
-      // Reset file input - Fix the error by getting the element from document object
-      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      // Reset file input - Fixed by using window.document instead of document variable
+      const fileInput = window.document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     } catch (error) {
       console.error("Failed to upload decrypted document:", error);
