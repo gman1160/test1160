@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Upload from "./pages/Upload";
 import Preview from "./pages/Preview";
 import Admin from "./pages/Admin";
-import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +25,6 @@ const App = () => (
             <Route path="/upload" element={<Upload />} />
             <Route path="/preview/:id" element={<Preview />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>

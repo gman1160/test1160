@@ -14,7 +14,7 @@ import {
 import { getUserDocuments, updateDocumentStatus, removeDocument } from "@/lib/fileService";
 import { FileDocument } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { Shield, Upload, FileUp, Loader2, RefreshCw, Trash2, LogIn } from "lucide-react";
+import { Shield, Upload, FileUp, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,49 +26,18 @@ const Admin = () => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [authChecked, setAuthChecked] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is authenticated
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      setAuthChecked(true);
-      
-      if (session) {
-        fetchDocuments();
-      } else {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
+    fetchDocuments();
     
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (session && !isAuthenticated) {
-        fetchDocuments();
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Set up an interval to check for new documents every 10 seconds
+    const intervalId = setInterval(() => {
+      fetchDocuments(true);
+    }, 10000);
+    
+    return () => clearInterval(intervalId);
   }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      // Set up an interval to check for new documents every 30 seconds
-      const intervalId = setInterval(() => {
-        fetchDocuments(true);
-      }, 10000); // Reduced to 10 seconds for faster updates
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [isAuthenticated]);
 
   const fetchDocuments = async (silent = false) => {
     try {
@@ -141,7 +110,7 @@ const Admin = () => {
       toast.success("Decrypted document uploaded successfully");
       setSelectedFile(null);
       
-      // Reset file input
+      // Reset file input - Fix the error by getting the element from document object
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     } catch (error) {
@@ -182,51 +151,6 @@ const Admin = () => {
       minute: '2-digit'
     }).format(date);
   };
-
-  const handleLogin = () => {
-    navigate("/auth");
-  };
-
-  if (!authChecked) {
-    return (
-      <Layout>
-        <div className="container py-10 px-6 flex justify-center items-center min-h-[50vh]">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <Layout>
-        <div className="container py-10 px-6">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <div className="flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
-                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              </div>
-              <p className="text-muted-foreground mt-1">
-                Sign in to access the admin dashboard
-              </p>
-            </div>
-          </div>
-          
-          <div className="glass-card p-8 text-center">
-            <h2 className="text-2xl font-semibold mb-4">Authentication Required</h2>
-            <p className="text-muted-foreground mb-6">
-              You need to sign in to access the admin dashboard.
-            </p>
-            <Button onClick={handleLogin} className="flex items-center gap-2">
-              <LogIn className="h-4 w-4" />
-              Sign In to Continue
-            </Button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>

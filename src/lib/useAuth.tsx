@@ -6,37 +6,19 @@ import { Session, User } from '@supabase/supabase-js';
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
+  // Since we don't want authentication, we just provide a simple API
+  // that always returns not authenticated but doesn't cause errors elsewhere
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // No-op since we're not using auth
   };
 
   return {
-    session,
-    user,
-    isLoading,
+    session: null,
+    user: null,
+    isLoading: false,
     signOut,
-    isAuthenticated: !!user,
+    isAuthenticated: true, // Always return true to bypass auth checks
   };
 };

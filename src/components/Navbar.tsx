@@ -3,36 +3,13 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, Menu, X, Shield, Upload as UploadIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Menu, X, Shield, Upload as UploadIcon } from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    };
-
-    checkAuth();
-    
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,17 +33,6 @@ const Navbar = () => {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success("Logged out successfully");
-      navigate("/");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out");
-    }
   };
 
   return (
@@ -110,46 +76,20 @@ const Navbar = () => {
             >
               Upload
             </Link>
-            {isAuthenticated && (
-              <Link
-                to="/admin"
-                className={`text-sm transition-colors hover:text-foreground/80 ${
-                  location.pathname === "/admin"
-                    ? "text-foreground font-medium"
-                    : "text-foreground/60"
-                }`}
-              >
-                Admin
-              </Link>
-            )}
+            <Link
+              to="/admin"
+              className={`text-sm transition-colors hover:text-foreground/80 ${
+                location.pathname === "/admin"
+                  ? "text-foreground font-medium"
+                  : "text-foreground/60"
+              }`}
+            >
+              Admin
+            </Link>
           </nav>
         </div>
 
-        <div className="hidden md:flex items-center gap-4">
-          {!isLoading && (
-            isAuthenticated ? (
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                size="sm"
-                className="gap-1.5"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            ) : (
-              <Button
-                onClick={() => navigate("/auth")}
-                variant="ghost"
-                size="sm"
-                className="gap-1.5"
-              >
-                <LogIn className="h-4 w-4" />
-                Sign In
-              </Button>
-            )
-          )}
-          
+        <div className="hidden md:flex items-center gap-4">  
           <Button asChild size="sm">
             <Link to="/upload" className="gap-1.5">
               <UploadIcon className="h-4 w-4" />
@@ -212,43 +152,19 @@ const Navbar = () => {
               >
                 Upload
               </Link>
-              {isAuthenticated && (
-                <Link
-                  to="/admin"
-                  className={`py-2 transition-colors flex items-center gap-2 ${
-                    location.pathname === "/admin"
-                      ? "text-foreground font-medium"
-                      : "text-foreground/60"
-                  }`}
-                >
-                  <Shield className="h-4 w-4" />
-                  Admin
-                </Link>
-              )}
+              <Link
+                to="/admin"
+                className={`py-2 transition-colors flex items-center gap-2 ${
+                  location.pathname === "/admin"
+                    ? "text-foreground font-medium"
+                    : "text-foreground/60"
+                }`}
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </Link>
               
               <div className="mt-auto pt-6 border-t">
-                {!isLoading && (
-                  isAuthenticated ? (
-                    <Button
-                      onClick={handleLogout}
-                      variant="ghost"
-                      className="w-full justify-start gap-2"
-                    >
-                      <LogOut className="h-5 w-5" />
-                      Sign Out
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => navigate("/auth")}
-                      variant="ghost"
-                      className="w-full justify-start gap-2"
-                    >
-                      <LogIn className="h-5 w-5" />
-                      Sign In
-                    </Button>
-                  )
-                )}
-                
                 <Button
                   asChild
                   className="w-full mt-4 gap-2"
