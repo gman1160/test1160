@@ -1,17 +1,43 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import FileUpload from "@/components/FileUpload";
 import { FileDocument } from "@/types";
-import { CheckCircle, Copy, Mail } from "lucide-react";
+import { CheckCircle, Copy, Mail, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Upload = () => {
   const [isUploaded, setIsUploaded] = useState(false);
   const [uploadedDoc, setUploadedDoc] = useState<FileDocument | null>(null);
   const [trackingLink, setTrackingLink] = useState<string>("");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleUploadSuccess = (document: FileDocument) => {
     setUploadedDoc(document);
@@ -32,6 +58,21 @@ const Upload = () => {
     toast.success("Email sent with tracking link!");
   };
 
+  const handleLogin = async () => {
+    // For now, just redirect to sign-in page (we'll create this later)
+    navigate("/auth");
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container max-w-4xl py-10 px-6 flex justify-center items-center min-h-[50vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container max-w-4xl py-10 px-6">
@@ -47,7 +88,22 @@ const Upload = () => {
           </p>
         </motion.div>
 
-        {isUploaded ? (
+        {!isAuthenticated ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 text-center"
+          >
+            <h2 className="text-2xl font-semibold mb-4">Authentication Required</h2>
+            <p className="text-muted-foreground mb-6">
+              You need to sign in to upload documents.
+            </p>
+            <Button onClick={handleLogin} className="flex items-center gap-2">
+              <LogIn className="h-4 w-4" />
+              Sign In to Continue
+            </Button>
+          </motion.div>
+        ) : isUploaded ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

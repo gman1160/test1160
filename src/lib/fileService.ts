@@ -1,15 +1,35 @@
 import { FileDocument } from "@/types";
-
-// Storage for documents (simulating a database)
-let mockDocuments: FileDocument[] = [];
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 export const uploadFile = async (file: File): Promise<FileDocument> => {
-  // In a real app, this would upload to a server
+  // First check if user is authenticated
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  
+  if (!userId) {
+    throw new Error("User must be authenticated to upload files");
+  }
+  
   console.log("Uploading file:", file.name);
   
-  // Create a new document object
-  const newDoc: FileDocument = {
-    id: `doc-${Date.now().toString(36)}`,
+  // Generate a unique file path
+  const fileId = uuidv4();
+  const fileExtension = file.name.split('.').pop();
+  const storagePath = `${userId}/${fileId}.${fileExtension}`;
+  
+  // Upload file to Supabase Storage
+  const { data: storageData, error: storageError } = await supabase.storage
+    .from('documents')
+    .upload(storagePath, file);
+    
+  if (storageError) {
+    console.error("Storage upload error:", storageError);
+    throw new Error(`Failed to upload file: ${storageError.message}`);
+  }
+
+  // Create document metadata
+  const newDoc: Omit<FileDocument, "id"> = {
     fileName: file.name,
     fileType: getFileType(file),
     size: file.size,
@@ -19,72 +39,153 @@ export const uploadFile = async (file: File): Promise<FileDocument> => {
     isPasswordProtected: true
   };
   
-  // In a real app, we would add this to the database
-  // For now, let's simulate a network request
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Add to our mock documents
-      mockDocuments.push(newDoc);
-      resolve(newDoc);
-    }, 1500);
-  });
+  // Insert document record in database
+  const { data: docData, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      user_id: userId,
+      file_name: newDoc.fileName,
+      file_type: newDoc.fileType,
+      file_size: newDoc.size,
+      file_path: storageData.path,
+      storage_path: storagePath,
+      original_file_name: file.name,
+      is_password_protected: newDoc.isPasswordProtected,
+      status: newDoc.status,
+      thumbnail_url: newDoc.thumbnailUrl,
+    })
+    .select('*')
+    .single();
+    
+  if (docError) {
+    console.error("Document insert error:", docError);
+    throw new Error(`Failed to save document metadata: ${docError.message}`);
+  }
+  
+  // Map database record to FileDocument type
+  return mapDbDocToFileDocument(docData);
 };
 
 export const getUserDocuments = async (): Promise<FileDocument[]> => {
-  // In a real app, this would fetch from a server
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([...mockDocuments]);
-    }, 800);
-  });
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .order('upload_date', { ascending: false });
+    
+  if (error) {
+    console.error("Error fetching documents:", error);
+    throw new Error(`Failed to fetch documents: ${error.message}`);
+  }
+  
+  return data.map(mapDbDocToFileDocument);
 };
 
 export const getDocument = async (id: string): Promise<FileDocument | null> => {
-  const doc = mockDocuments.find(d => d.id === id);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(doc || null);
-    }, 500);
-  });
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+    
+  if (error) {
+    console.error("Error fetching document:", error);
+    throw new Error(`Failed to fetch document: ${error.message}`);
+  }
+  
+  return data ? mapDbDocToFileDocument(data) : null;
 };
 
 export const updateDocumentStatus = async (id: string, status: FileDocument['status']): Promise<FileDocument | null> => {
-  const docIndex = mockDocuments.findIndex(d => d.id === id);
+  // Create update data object
+  const updateData: any = { status };
   
-  if (docIndex === -1) {
-    return Promise.resolve(null);
+  // If status is ready, add download URL and preview URL
+  if (status === 'ready') {
+    const { data } = await supabase
+      .from('documents')
+      .select('storage_path')
+      .eq('id', id)
+      .single();
+      
+    if (data?.storage_path) {
+      // Generate URLs for the file
+      const { data: urlData } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(data.storage_path, 60 * 60 * 24); // 24 hour expiry
+        
+      if (urlData?.signedUrl) {
+        updateData.download_url = urlData.signedUrl;
+        updateData.preview_url = urlData.signedUrl;
+      }
+    }
   }
   
-  // Update the document status
-  mockDocuments[docIndex] = {
-    ...mockDocuments[docIndex],
-    status,
-    // If status is ready, add a download URL
-    ...(status === 'ready' ? { 
-      downloadUrl: `/download/${id}`,
-      previewUrl: `/preview/${id}`
-    } : {})
-  };
+  const { data, error } = await supabase
+    .from('documents')
+    .update(updateData)
+    .eq('id', id)
+    .select('*')
+    .single();
+    
+  if (error) {
+    console.error("Error updating document status:", error);
+    throw new Error(`Failed to update document status: ${error.message}`);
+  }
   
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockDocuments[docIndex]);
-    }, 500);
-  });
+  return mapDbDocToFileDocument(data);
 };
 
-// Function to remove a document (for admin purposes)
 export const removeDocument = async (id: string): Promise<boolean> => {
-  const initialLength = mockDocuments.length;
-  mockDocuments = mockDocuments.filter(doc => doc.id !== id);
+  // First get the storage path
+  const { data: docData } = await supabase
+    .from('documents')
+    .select('storage_path')
+    .eq('id', id)
+    .single();
+    
+  // Delete from the database
+  const { error: dbError } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', id);
+    
+  if (dbError) {
+    console.error("Error deleting document from database:", dbError);
+    throw new Error(`Failed to delete document: ${dbError.message}`);
+  }
   
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockDocuments.length < initialLength);
-    }, 500);
-  });
+  // If we have a storage path, delete the file too
+  if (docData?.storage_path) {
+    const { error: storageError } = await supabase.storage
+      .from('documents')
+      .remove([docData.storage_path]);
+      
+    if (storageError) {
+      console.error("Error deleting file from storage:", storageError);
+      // Continue anyway as the database record is deleted
+    }
+  }
+  
+  return true;
 };
 
+// Helper to map database document to FileDocument type
+const mapDbDocToFileDocument = (dbDoc: any): FileDocument => {
+  return {
+    id: dbDoc.id,
+    fileName: dbDoc.file_name,
+    fileType: dbDoc.file_type as 'pdf' | 'word' | 'excel' | 'other',
+    size: dbDoc.file_size,
+    uploadDate: dbDoc.upload_date,
+    status: dbDoc.status as 'pending' | 'processing' | 'ready' | 'completed',
+    downloadUrl: dbDoc.download_url,
+    previewUrl: dbDoc.preview_url,
+    thumbnailUrl: dbDoc.thumbnail_url,
+    isPasswordProtected: dbDoc.is_password_protected
+  };
+};
+
+// Keep existing format functions the same
 export const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) {
     return bytes + ' bytes';

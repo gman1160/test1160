@@ -9,7 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      documents: {
+        Row: {
+          download_url: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          is_password_protected: boolean | null
+          original_file_name: string
+          preview_url: string | null
+          status: string | null
+          storage_path: string
+          thumbnail_url: string | null
+          updated_at: string | null
+          upload_date: string | null
+          user_id: string | null
+        }
+        Insert: {
+          download_url?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          is_password_protected?: boolean | null
+          original_file_name: string
+          preview_url?: string | null
+          status?: string | null
+          storage_path: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          upload_date?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          download_url?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          is_password_protected?: boolean | null
+          original_file_name?: string
+          preview_url?: string | null
+          status?: string | null
+          storage_path?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          upload_date?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
