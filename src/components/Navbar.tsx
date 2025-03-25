@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, Upload as UploadIcon } from "lucide-react";
+import { Menu, X, Upload as UploadIcon } from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,7 +51,7 @@ const Navbar = () => {
               D
             </div>
             <span className="font-bold text-xl hidden md:inline-block">
-              Decryptor
+              DocUnlock
             </span>
           </Link>
 
@@ -76,16 +76,7 @@ const Navbar = () => {
             >
               Upload
             </Link>
-            <Link
-              to="/admin"
-              className={`text-sm transition-colors hover:text-foreground/80 ${
-                location.pathname === "/admin"
-                  ? "text-foreground font-medium"
-                  : "text-foreground/60"
-              }`}
-            >
-              Admin
-            </Link>
+            {/* Admin link removed from the navbar */}
           </nav>
         </div>
 
@@ -120,7 +111,7 @@ const Navbar = () => {
                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
                   D
                 </div>
-                <span className="font-bold text-xl">Decryptor</span>
+                <span className="font-bold text-xl">DocUnlock</span>
               </Link>
               <button
                 onClick={toggleMenu}
@@ -152,17 +143,7 @@ const Navbar = () => {
               >
                 Upload
               </Link>
-              <Link
-                to="/admin"
-                className={`py-2 transition-colors flex items-center gap-2 ${
-                  location.pathname === "/admin"
-                    ? "text-foreground font-medium"
-                    : "text-foreground/60"
-                }`}
-              >
-                <Shield className="h-4 w-4" />
-                Admin
-              </Link>
+              {/* Admin link removed from the mobile menu */}
               
               <div className="mt-auto pt-6 border-t">
                 <Button
