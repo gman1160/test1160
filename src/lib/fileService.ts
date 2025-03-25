@@ -1,8 +1,8 @@
 
 import { FileDocument } from "@/types";
 
-// Mock data for demonstration purposes
-const mockDocuments: FileDocument[] = [
+// Storage for documents (simulating a database)
+let mockDocuments: FileDocument[] = [
   {
     id: "doc-1",
     fileName: "Financial_Report_2023.pdf",
@@ -12,16 +12,6 @@ const mockDocuments: FileDocument[] = [
     status: "ready",
     previewUrl: "/preview/doc-1",
     thumbnailUrl: "https://placehold.co/600x400/e2e8f0/475569?text=PDF+Preview",
-    isPasswordProtected: true
-  },
-  {
-    id: "doc-2",
-    fileName: "Business_Plan.docx",
-    fileType: "word",
-    size: 1800000,
-    uploadDate: new Date(Date.now() - 3600000 * 24).toISOString(),
-    status: "pending",
-    thumbnailUrl: "https://placehold.co/600x400/e2e8f0/475569?text=DOCX+Processing",
     isPasswordProtected: true
   }
 ];
@@ -83,12 +73,27 @@ export const updateDocumentStatus = async (id: string, status: FileDocument['sta
     ...mockDocuments[docIndex],
     status,
     // If status is ready, add a download URL
-    ...(status === 'ready' ? { downloadUrl: `/download/${id}` } : {})
+    ...(status === 'ready' ? { 
+      downloadUrl: `/download/${id}`,
+      previewUrl: `/preview/${id}`
+    } : {})
   };
   
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(mockDocuments[docIndex]);
+    }, 500);
+  });
+};
+
+// Function to remove a document (for admin purposes)
+export const removeDocument = async (id: string): Promise<boolean> => {
+  const initialLength = mockDocuments.length;
+  mockDocuments = mockDocuments.filter(doc => doc.id !== id);
+  
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockDocuments.length < initialLength);
     }, 500);
   });
 };

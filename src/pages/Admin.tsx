@@ -14,12 +14,13 @@ import {
 import { getUserDocuments, updateDocumentStatus } from "@/lib/fileService";
 import { FileDocument } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { Shield, Upload, FileUp, Loader2 } from "lucide-react";
+import { Shield, Upload, FileUp, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 const Admin = () => {
   const [documents, setDocuments] = useState<FileDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -27,19 +28,39 @@ const Admin = () => {
 
   useEffect(() => {
     fetchDocuments();
+    
+    // Set up an interval to check for new documents every 30 seconds
+    const intervalId = setInterval(() => {
+      fetchDocuments(true);
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
   }, []);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) {
+        setIsLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
+      
       const docs = await getUserDocuments();
       setDocuments(docs);
     } catch (error) {
       console.error("Failed to fetch documents:", error);
-      toast.error("Failed to load documents");
+      if (!silent) {
+        toast.error("Failed to load documents");
+      }
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchDocuments();
+    toast.success("Document list refreshed");
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +127,17 @@ const Admin = () => {
               Manage document jobs and upload decrypted files
             </p>
           </div>
-          <Button onClick={fetchDocuments} variant="outline">
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline"
+            disabled={isRefreshing}
+            className="flex items-center gap-2"
+          >
+            {isRefreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             Refresh
           </Button>
         </div>
